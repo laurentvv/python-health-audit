@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+.venv_uv/
+env/
+.env
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# Skill packaging artifacts
+*.skill
+
+# Benchmark / skill-creator workspace
+*-workspace/
+iteration-*/
+benchmark.json
+benchmark.md
+review.html
+grading.json
+timing.json
+eval_metadata.json
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local notes
+AGENTS.md
+tasks.md
+plan.md
