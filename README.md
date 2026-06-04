@@ -7,7 +7,7 @@
 
 > A read-only static audit skill for Python projects: one command, one Markdown report, one A–F grade.
 
-`python-health-audit` is a **Kilo / Claude Code skill** that any developer (lead, solo, acquirer) can invoke to get an instant, opinionated health check of a Python codebase. It runs four industry-standard linters through [`uvx`](https://docs.astral.sh/uv/) — no virtualenv, no install — and writes a single `rapport_sante_python.md` at the root of the audited project.
+`python-health-audit` is a **Kilo / Claude Code skill** that any developer (lead, solo, acquirer) can invoke to get an instant, opinionated health check of a Python codebase. It runs four industry-standard linters through [`uvx`](https://docs.astral.sh/uv/) — no virtualenv, no install — and writes a single `python_health_report.md` at the root of the audited project.
 
 ---
 
@@ -55,7 +55,7 @@ The agent will:
    - `uvx radon mi .` — Maintainability Index per file
    - `uvx pylint --disable=all --enable=duplicate-code (...)` — copy-paste detection
 3. Compute an **A–F grade** from the metrics (deterministic heuristic, see below)
-4. Write `rapport_sante_python.md` at the root of the audited project
+4. Write `python_health_report.md` at the root of the audited project
 
 That's it. No source files are touched.
 
@@ -130,7 +130,7 @@ Tested against 2 realistic prompts × 2 configurations (with vs without the skil
 | **Delta** | **+71 pp** | — |
 
 The baseline (no skill) consistently fails to:
-- Produce the expected `rapport_sante_python.md` filename (agents invent `AUDIT.md`, `AUDIT_REPORT.md`, etc.)
+- Produce the expected `python_health_report.md` filename (agents invent `AUDIT.md`, `AUDIT_REPORT.md`, etc.)
 - Follow the 5-section template and the 3-item action plan
 - Display the A–F grade
 - Include the Vulture false-positive warning

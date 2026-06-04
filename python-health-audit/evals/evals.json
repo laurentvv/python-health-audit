@@ -4,10 +4,10 @@
     {
       "id": 1,
       "prompt": "I'm taking over a 3-year-old Flask project and I'd like a full health check before I start refactoring. The code lives in ./backend. Tell me where the technical debt is.",
-      "expected_output": "A file rapport_sante_python.md at the root of ./backend containing the 5 sections, with a justified A-F grade, and at least 3 concrete actions in the action plan. The tools Ruff, Vulture, Radon and Pylint must all have been invoked.",
+      "expected_output": "A file python_health_report.md at the root of ./backend containing the 5 sections, with a justified A-F grade, and at least 3 concrete actions in the action plan. The tools Ruff, Vulture, Radon and Pylint must all have been invoked.",
       "files": [],
       "expectations": [
-        "The file rapport_sante_python.md exists at the root of the audited project",
+        "The file python_health_report.md exists at the root of the audited project",
         "All 5 sections (Executive Summary, Local Dead Code, Global Dead Code, Complexity, Duplication, Action Plan) are present",
         "No source .py file has been modified (read-only)",
         "The commands ruff, vulture, radon cc, radon mi and pylint have all been executed",
@@ -23,7 +23,7 @@
       "expected_output": "Report generated, with section 4 (Duplication) populated if pylint actually detects duplicates, and section 2 (Ruff + Vulture Dead Code) documented.",
       "files": [],
       "expectations": [
-        "The file rapport_sante_python.md is created",
+        "The file python_health_report.md is created",
         "Section 4 Code Duplication is present even if empty (with explicit mention 'No duplication detected')",
         "Both subsections 2.1 Ruff and 2.2 Vulture are present",
         "The Vulture false-positive warning is present",
