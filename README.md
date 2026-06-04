@@ -1,6 +1,6 @@
 # python-health-audit
 
-[![Skill](https://img.shields.io/badge/skill-v1.0-5b2ddb?style=flat-square)](python-health-audit/SKILL.md)
+[![Skill](https://img.shields.io/badge/skill-v1.1-5b2ddb?style=flat-square)](SKILL.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
 [![Pass rate: 100%](https://img.shields.io/badge/pass%20rate-100%25-brightgreen?style=flat-square)](#benchmark)
 [![GitHub](https://img.shields.io/badge/GitHub-laurentvv%2Fpython--health--audit-181717?style=flat-square&logo=github)](https://github.com/laurentvv/python-health-audit)
@@ -22,18 +22,33 @@
 
 ## Install
 
-The skill works in any agent runtime that supports the [skill format](https://kilo.ai/docs) (Kilo, Claude Code, skills.sh).
+The skill works in any agent runtime that supports the [`skills`](https://skills.sh) format — Kilo, Claude Code, Roo Code, Cline, Cursor, Continue, etc.
+
+**Recommended (one-liner):**
+
+```powershell
+npx skills add laurentvv/python-health-audit
+```
+
+The CLI accepts the GitHub shorthand `owner/repo` and auto-discovers `SKILL.md` at the repo root.
+
+**Per-runtime:**
 
 ```powershell
 # Kilo
-kilo skills add https://github.com/laurentvv/python-health-audit
+kilo skills add laurentvv/python-health-audit
 
 # Claude Code
-claude skills add https://github.com/laurentvv/python-health-audit
+claude skills add laurentvv/python-health-audit
 
-# npx / skills.sh
-npx skills add https://github.com/laurentvv/python-health-audit --skill python-health-audit
+# Roo Code (installs into .roo/skills/ of the current project)
+npx skills add laurentvv/python-health-audit
+
+# Global install (shared across all projects on the machine)
+npx skills add -g laurentvv/python-health-audit
 ```
+
+Global installs use symlinks so subsequent `skills update` calls keep every project in sync.
 
 ## Usage
 
@@ -139,6 +154,16 @@ Reproduce: see `evals/evals.json` and the [iteration-1 artifacts archived in the
 
 ## Repository structure
 
+Single-skill repo, flat layout (auto-discovered by `npx skills add`):
+
+```
+python-health-audit/
+├── README.md
+├── LICENSE
+├── .gitignore
+├── SKILL.md          # frontmatter + role / objective / steps / grading / format / constraints
+└── evals/
+    └── evals.json    # 2 benchmark test cases
 ```
 python-health-audit/
 ├── README.md
@@ -156,7 +181,8 @@ python-health-audit/
 |---|---|
 | Kilo | ✅ supported |
 | Claude Code | ✅ supported |
-| Other MCP-aware agents | ✅ if they read the SKILL.md frontmatter format |
+| Roo Code (`.roo/skills/`) | ✅ supported |
+| Cline, Cursor, Continue, … | ✅ any agent that reads the `SKILL.md` frontmatter format |
 
 Required on the host machine:
 - [`uv`](https://docs.astral.sh/uv/) (provides the `uvx` command) — **or** `pipx` as fallback
@@ -164,10 +190,10 @@ Required on the host machine:
 
 ## Contributing
 
-This is a single-skill repo. To iterate:
+This is a single-skill repo (flat layout). To iterate:
 
-1. Edit `python-health-audit/SKILL.md`.
-2. Add / modify test prompts in `python-health-audit/evals/evals.json`.
+1. Edit `SKILL.md` at the repo root.
+2. Add / modify test prompts in `evals/evals.json`.
 3. Re-run benchmarks with the [`skill-creator`](https://github.com/Kilo-Org/skills/tree/main/skill-creator) workflow.
 4. Open a PR — describe the change in the skill's behavior, not just the file diff.
 
