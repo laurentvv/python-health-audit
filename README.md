@@ -140,7 +140,7 @@ Reproduce: see `evals/evals.json` and the [iteration-1 artifacts archived in the
 ## Repository structure
 
 ```
-skills-generator/
+python-health-audit/
 ├── README.md
 ├── LICENSE
 ├── .gitignore
