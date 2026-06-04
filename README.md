@@ -3,6 +3,7 @@
 [![Skill](https://img.shields.io/badge/skill-v1.0-5b2ddb?style=flat-square)](python-health-audit/SKILL.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
 [![Pass rate: 100%](https://img.shields.io/badge/pass%20rate-100%25-brightgreen?style=flat-square)](#benchmark)
+[![GitHub](https://img.shields.io/badge/GitHub-laurentvv%2Fpython--health--audit-181717?style=flat-square&logo=github)](https://github.com/laurentvv/python-health-audit)
 
 > A read-only static audit skill for Python projects: one command, one Markdown report, one A–F grade.
 
@@ -25,16 +26,14 @@ The skill works in any agent runtime that supports the [skill format](https://ki
 
 ```powershell
 # Kilo
-kilo skills add https://github.com/<owner>/skills-generator
+kilo skills add https://github.com/laurentvv/python-health-audit
 
 # Claude Code
-claude skills add https://github.com/<owner>/skills-generator
+claude skills add https://github.com/laurentvv/python-health-audit
 
 # npx / skills.sh
-npx skills add https://github.com/<owner>/skills-generator --skill python-health-audit
+npx skills add https://github.com/laurentvv/python-health-audit --skill python-health-audit
 ```
-
-> Replace `<owner>` with the actual GitHub organization or username once the repo is pushed.
 
 ## Usage
 
@@ -136,7 +135,7 @@ The baseline (no skill) consistently fails to:
 - Display the A–F grade
 - Include the Vulture false-positive warning
 
-Reproduce: see `evals/evals.json` and the [iteration-1 artifacts archived in the v1.0 release](../../releases/tag/v1.0).
+Reproduce: see `evals/evals.json` and the [iteration-1 artifacts archived in the v1.0 release](https://github.com/laurentvv/python-health-audit/releases/tag/v1.0).
 
 ## Repository structure
 
