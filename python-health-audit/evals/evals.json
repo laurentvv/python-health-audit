@@ -1,0 +1,34 @@
+{
+  "skill_name": "python-health-audit",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Je reprends un projet Flask qui a 3 ans d'âge, je voudrais qu'on me fasse un état des lieux avant de commencer à refactorer. Le code est dans ./backend. Dis-moi où est la dette technique.",
+      "expected_output": "Un fichier rapport_sante_python.md à la racine de ./backend contenant les 5 sections, avec une note A-F justifiée, et au moins 3 actions concrètes dans le plan d'action. Les outils Ruff, Vulture, Radon et Pylint doivent avoir été invoqués.",
+      "files": [],
+      "expectations": [
+        "Le fichier rapport_sante_python.md existe à la racine du projet audité",
+        "Les 5 sections (Résumé, Code Mort Local, Code Mort Global, Complexité, Duplication, Plan d'Action) sont présentes",
+        "Aucun fichier .py source n'a été modifié (lecture seule)",
+        "Les commandes ruff, vulture, radon cc, radon mi et pylint ont toutes été exécutées",
+        "Une note A-F figure dans le Résumé Exécutif",
+        "Le plan d'action contient exactement 3 actions numérotées",
+        "Aucun ruff --fix ou correction automatique n'a été appliqué",
+        "L'avertissement sur les faux positifs Vulture est présent"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Sur mon projet . je crois que j'ai beaucoup copié-collé des blocs de parsing CSV entre mes services. Tu peux vérifier la duplication et au passage me dire si j'ai des fonctions que j'utilise plus ?",
+      "expected_output": "Rapport généré, avec section 4 (Duplication) peuplée si pylint détecte effectivement des doublons, et section 2 (Code Mort Ruff + Vulture) documentée.",
+      "files": [],
+      "expectations": [
+        "Le fichier rapport_sante_python.md est créé",
+        "La section 4 Duplication de Code est présente même si vide (avec mention explicite 'aucune duplication détectée')",
+        "Les deux sous-sections 2.1 Ruff et 2.2 Vulture sont présentes",
+        "L'avertissement sur les faux positifs Vulture figure",
+        "Aucun fichier source modifié"
+      ]
+    }
+  ]
+}
