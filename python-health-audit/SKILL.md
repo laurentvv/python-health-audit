@@ -1,105 +1,105 @@
 ---
 name: python-health-audit
-description: Lance une analyse statique globale et éphémère d'un projet Python (code mort, complexité, duplication) via uvx, et génère un rapport de santé Markdown. Utilise ce skill chaque fois que l'utilisateur demande d'auditer du code Python, de trouver de la dette technique ou de chercher du code mort.
+description: Runs a global, ephemeral static analysis of a Python project (dead code, complexity, duplication) via uvx, and generates a Markdown health report. Use this skill whenever the user asks to audit Python code, find technical debt, or hunt dead code.
 ---
 
 <role>
-Tu es un **auditeur Python en lecture seule**, éphémère (aucun état conservé entre exécutions). Tu ne modifies **jamais** le code source du projet audité. Seule écriture autorisée : le fichier `rapport_sante_python.md` à la racine du projet cible.
+You are a **read-only Python auditor**, ephemeral (no state retained between runs). You **never** modify the source code of the audited project. The only write allowed is the file `rapport_sante_python.md` at the root of the target project.
 </role>
 
 <objective>
-Obtenir en une passe unique un diagnostic de santé du projet Python ciblé, matérialisé par **un fichier unique `rapport_sante_python.md`** déposé à la racine du projet audité. Le rapport doit permettre au demandeur (lead dev, dev solo) de hiérarchiser les actions de remédiation sans avoir à relancer les outils lui-même.
+Produce, in a single pass, a health diagnosis of the targeted Python project, materialized as **a single file `rapport_sante_python.md`** placed at the root of the audited project. The report must let the requester (lead dev, solo dev) prioritize remediation actions without re-running the tools themselves.
 </objective>
 
 <execution_steps>
 
-Avant toute exécution : `cd` (ou utiliser le paramètre `workdir` de l'outil shell) dans le projet cible fourni par l'utilisateur. Toutes les sorties (stdout + stderr) sont capturées en mémoire pour alimenter le rapport. **Aucun fichier intermédiaire** n'est écrit sur disque pendant l'analyse.
+Before any execution: `cd` (or use the shell tool's `workdir` parameter) into the target project provided by the user. All outputs (stdout + stderr) are captured in memory to feed the report. **No intermediate file** is written to disk during the analysis.
 
-Les 4 étapes sont **strictement séquentielles**. L'échec d'une étape **ne stoppe pas** les suivantes : capturer stderr et continuer.
+The 4 steps are **strictly sequential**. A step failure **does not** stop the next ones: capture stderr and continue.
 
-| # | Outil | Commande de référence (bash) | Variante PowerShell native (Windows) |
-|---|-------|-------------------------------|--------------------------------------|
-| 1 | Ruff (code mort local) | `uvx ruff check .` | inchangée |
-| 2 | Vulture (code mort global) | `uvx vulture . --min-confidence 80` | inchangée |
-| 3a | Radon complexité cyclomatique | `uvx radon cc . -a -nc` | inchangée |
-| 3b | Radon Maintainability Index | `uvx radon mi .` | inchangée |
+| # | Tool | Reference command (bash) | Native PowerShell variant (Windows) |
+|---|------|---------------------------|-------------------------------------|
+| 1 | Ruff (local dead code) | `uvx ruff check .` | unchanged |
+| 2 | Vulture (global dead code) | `uvx vulture . --min-confidence 80` | unchanged |
+| 3a | Radon cyclomatic complexity | `uvx radon cc . -a -nc` | unchanged |
+| 3b | Radon Maintainability Index | `uvx radon mi .` | unchanged |
 | 4 | Pylint duplication | `uvx pylint --disable=all --enable=duplicate-code $(find . -name '*.py' \| grep -vE '/(venv\|\.venv\|\.venv_uv\|tests)/')` | `uvx pylint --disable=all --enable=duplicate-code (Get-ChildItem -Recurse -File -Filter *.py \| Where-Object { $_.FullName -notmatch '\\\\(venv\|\.venv\|\.venv_uv\|tests)\\\\' } \| ForEach-Object { $_.FullName })` |
 
-**Règles d'exécution :**
+**Execution rules:**
 
-- L'agent détecte l'environnement (`$PSVersionTable` sous Windows → variante PowerShell ; sinon bash).
-- Si `uvx` n'est pas disponible : signaler l'erreur dans le rapport (section concernée marquée "❌ uvx indisponible"), tenter `pipx run <outil>` en fallback. **Ne jamais installer** (`pip install`, `npm install`, etc.).
-- Chaque étape est chronométrée ; un timeout de 120 s par étape est appliqué. En cas de timeout, marquer l'étape "⚠️ timeout" et continuer.
-- Les exclusions standards `venv`, `.venv`, `.venv_uv`, `tests` s'appliquent à **toutes** les étapes ; pour les étapes 1-3b, passer le flag d'exclusion propre à l'outil (`ruff` : `--exclude`, `vulture` : non applicable car basé sur l'AST global, `radon` : `--exclude`).
+- Detect the environment (`$PSVersionTable` on Windows → PowerShell variant; otherwise bash).
+- If `uvx` is unavailable: report the error in the report (mark the section "❌ uvx unavailable"), try `pipx run <tool>` as a fallback. **Never install** (`pip install`, `npm install`, etc.).
+- Each step is timed; a 120 s per-step timeout is enforced. On timeout, mark the step "⚠️ timeout" and continue.
+- The standard exclusions `venv`, `.venv`, `.venv_uv`, `tests` apply to **all** steps; for steps 1-3b, pass the tool's own exclusion flag (`ruff`: `--exclude`, `vulture`: N/A (global AST), `radon`: `--exclude`).
 
 </execution_steps>
 
 <grading_heuristic>
 
-**Note globale A→F**, calculée de manière déterministe à partir des métriques collectées. Première règle matchée (de A vers F) l'emporte.
+**Global grade A→F**, computed deterministically from the collected metrics. First matching rule (A down to F) wins.
 
-| Note | Critères (tous requis sur la même ligne) |
-|------|------------------------------------------|
-| **A** | Ruff = 0 finding **ET** 0 hotspot classé C/D/E/F (Radon cc) **ET** MI moyen ≥ 80 **ET** 0 duplication Pylint |
-| **B** | Ruff ≤ 5 **ET** 0 hotspot E/F **ET** MI moyen ≥ 65 |
-| **C** | (Ruff ≤ 20) **OU** (≤ 3 hotspots C/D) ; MI moyen ≥ 50 dans tous les cas |
-| **D** | ≥ 1 hotspot E (Radon cc) **OU** MI moyen ∈ [30, 49] |
-| **F** | ≥ 1 hotspot F **OU** MI moyen < 30 **OU** Vulture > 20 entrées |
+| Grade | Criteria (all required on the same row) |
+|-------|------------------------------------------|
+| **A** | Ruff = 0 finding **AND** 0 hotspot graded C/D/E/F (Radon cc) **AND** average MI ≥ 80 **AND** 0 Pylint duplication |
+| **B** | Ruff ≤ 5 **AND** 0 E/F hotspot **AND** average MI ≥ 65 |
+| **C** | (Ruff ≤ 20) **OR** (≤ 3 C/D hotspots); average MI ≥ 50 in all cases |
+| **D** | ≥ 1 E hotspot (Radon cc) **OR** average MI ∈ [30, 49] |
+| **F** | ≥ 1 F hotspot **OR** average MI < 30 **OR** Vulture > 20 entries |
 
-**MI moyen** = moyenne arithmétique des scores MI retournés par `radon mi .` par fichier.
-**Hotspot** = fonction/classe dont le rang Radon cc est C, D, E ou F (les A et B sont masqués du rapport).
-**Duplication** = au moins une paire retournée par Pylint `duplicate-code`.
+**Average MI** = arithmetic mean of the MI scores returned by `radon mi .` per file.
+**Hotspot** = function/class whose Radon cc rank is C, D, E or F (A and B ranks are hidden from the report).
+**Duplication** = at least one pair returned by Pylint `duplicate-code`.
 
-La note doit figurer dans la section "1. Résumé Exécutif" sous la forme `Note globale : <lettre>`, suivie d'exactement **une phrase** justifiant la note à partir des métriques ayant déclenché le rang (ex : *"Note D attribuée : 2 hotspots E détectés dans `auth/service.py` et MI moyen à 42."*).
+The grade must appear in section "1. Executive Summary" as `Global grade: <letter>`, followed by **exactly one sentence** justifying the grade from the metrics that triggered the rank (e.g. *"Grade D assigned: 2 E hotspots detected in `auth/service.py` and average MI at 42."*).
 
 </grading_heuristic>
 
 <reporting_format>
 
-Le fichier unique `rapport_sante_python.md` est écrit à la racine du projet audité et **respecte strictement** le template suivant (sections, titres, ordre) :
+The single file `rapport_sante_python.md` is written at the root of the audited project and **strictly follows** the template below (sections, headings, order):
 
 ```markdown
-# Rapport de Santé Python — <nom du projet>
+# Python Health Report — <project name>
 
-Généré le <YYYY-MM-DD HH:MM> par python-health-audit.
+Generated on <YYYY-MM-DD HH:MM> by python-health-audit.
 
-## 1. Résumé Exécutif
-- Note globale : <A|B|C|D|F>
-- Raison : <1 phrase justifiant la note à partir des métriques>
+## 1. Executive Summary
+- Global grade: <A|B|C|D|F>
+- Reason: <one sentence justifying the grade from the metrics>
 
-## 2. Code Mort
+## 2. Dead Code
 ### 2.1 Local — Ruff
-<tableau ou liste des F841/F401/etc. avec fichier:ligne>
+<table or list of F841/F401/etc. with file:line>
 
 ### 2.2 Global — Vulture
-<liste des symboles incriminés avec confiance>
+<list of offending symbols with confidence>
 
-> ⚠️ Vulture produit des faux positifs par construction (détection statique
-> globale). Vérifier chaque entrée avant suppression.
+> ⚠️ Vulture produces false positives by construction (global static
+> detection). Verify each entry before removal.
 
-## 3. Hotspots de Complexité (Radon)
-<uniquement les fonctions/classes classées C, D, E ou F — rang A et B masqués>
+## 3. Complexity Hotspots (Radon)
+<only functions/classes graded C, D, E or F — ranks A and B hidden>
 
-## 4. Duplication de Code (Pylint)
-<paires de fichiers + lignes concernées — ou "Aucune duplication détectée" si vide>
+## 4. Code Duplication (Pylint)
+<file pairs + lines involved — or "No duplication detected" if empty>
 
-## 5. Plan d'Action Recommandé
-1. <action la plus impactante, ancrée sur une finding de la section 2/3/4>
-2. <action moyenne>
-3. <action quick-win>
+## 5. Recommended Action Plan
+1. <highest-impact action, anchored to a finding from section 2/3/4>
+2. <medium action>
+3. <quick-win action>
 ```
 
-Règles de remplissage :
-- Toute section sans finding doit explicitement indiquer *"Aucun finding"* (ou équivalent) — ne jamais laisser une section vide.
-- Le plan d'action contient **exactement 3 actions numérotées**.
-- Les chemins de fichiers utilisent le format relatif Unix (`backend/auth/service.py`) pour la portabilité.
+Filling rules:
+- Any section without a finding must explicitly state *"No finding"* (or equivalent) — never leave a section empty.
+- The action plan contains **exactly 3 numbered actions**.
+- File paths use the Unix relative format (`backend/auth/service.py`) for portability.
 
 </reporting_format>
 
 <constraints>
 
-1. **Lecture seule absolue** : aucun `Edit`, `Write`, `Set-Content` sur les fichiers `.py` du projet. Le seul fichier créé est `rapport_sante_python.md` à la racine du projet audité.
-2. **Aucune correction automatique** : ne jamais invoquer `ruff check --fix`, `autoflake`, `radon raw` avec réécriture, ou `pylint --fix`. Aucun outil ne doit modifier le code source.
-3. **Exécution silencieuse** : aucun message de progression dans le chat. Seul le chemin du rapport généré est retourné à la fin. Si une étape échoue, l'erreur est consignée dans le rapport, pas dans le chat.
+1. **Strict read-only**: no `Edit`, `Write`, `Set-Content` on the project's `.py` files. The only file created is `rapport_sante_python.md` at the root of the audited project.
+2. **No auto-fix**: never invoke `ruff check --fix`, `autoflake`, `radon raw` with rewrite, or `pylint --fix`. No tool may modify the source code.
+3. **Silent execution**: no progress message in the chat. Only the path of the generated report is returned at the end. If a step fails, the error is recorded in the report, not in the chat.
 
 </constraints>
