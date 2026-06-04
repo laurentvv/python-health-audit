@@ -1,6 +1,6 @@
 ---
 name: python-health-audit
-description: Runs a global, ephemeral static analysis of a Python project (dead code, complexity, duplication) via uvx, and generates a Markdown health report. Use this skill whenever the user asks to audit Python code, find technical debt, or hunt dead code.
+description: Runs a **read-only** static audit of a **Python** project (dead code via Ruff/Vulture, cyclomatic complexity hotspots via Radon, duplication via Pylint) using uvx, and writes a single Markdown health report with an A-F grade and 3-item action plan. Use this skill whenever the user asks to audit Python code, find technical debt, hunt dead code or unused imports, measure cyclomatic complexity, detect copy-pasted code blocks, or get a due-diligence / pre-refactor health check on a Python codebase. **Do NOT use for** security audits, performance profiling, test coverage, writing new code, dependency upgrades, CI setup, or non-Python languages (TypeScript, Go, etc.).
 ---
 
 <role>
