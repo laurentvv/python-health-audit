@@ -19,10 +19,10 @@ The 4 steps are **strictly sequential**. A step failure **does not** stop the ne
 
 | # | Tool | Reference command (bash) | Native PowerShell variant (Windows) |
 |---|------|---------------------------|-------------------------------------|
-| 1 | Ruff (local dead code) | `uvx ruff check .` | unchanged |
-| 2 | Vulture (global dead code) | `uvx vulture . --min-confidence 80` | unchanged |
-| 3a | Radon cyclomatic complexity | `uvx radon cc . -a -nc` | unchanged |
-| 3b | Radon Maintainability Index | `uvx radon mi .` | unchanged |
+| 1 | Ruff (local dead code) | `uvx ruff check . --exclude venv,.venv,.venv_uv,tests` | unchanged |
+| 2 | Vulture (global dead code) | `uvx vulture . --min-confidence 80 --exclude venv,.venv,.venv_uv,tests` | unchanged |
+| 3a | Radon cyclomatic complexity | `uvx radon cc . -a -nc --exclude "venv/*,.venv/*,.venv_uv/*,tests/*"` | unchanged |
+| 3b | Radon Maintainability Index | `uvx radon mi . --exclude "venv/*,.venv/*,.venv_uv/*,tests/*"` | unchanged |
 | 4 | Pylint duplication | `uvx pylint --disable=all --enable=duplicate-code $(find . -name '*.py' \| grep -vE '/(venv\|\.venv\|\.venv_uv\|tests)/')` | `uvx pylint --disable=all --enable=duplicate-code (Get-ChildItem -Recurse -File -Filter *.py \| Where-Object { $_.FullName -notmatch '\\\\(venv\|\.venv\|\.venv_uv\|tests)\\\\' } \| ForEach-Object { $_.FullName })` |
 
 **Execution rules:**
@@ -30,7 +30,7 @@ The 4 steps are **strictly sequential**. A step failure **does not** stop the ne
 - Detect the environment (`$PSVersionTable` on Windows → PowerShell variant; otherwise bash).
 - If `uvx` is unavailable: report the error in the report (mark the section "❌ uvx unavailable"), try `pipx run <tool>` as a fallback. **Never install** (`pip install`, `npm install`, etc.).
 - Each step is timed; a 120 s per-step timeout is enforced. On timeout, mark the step "⚠️ timeout" and continue.
-- The standard exclusions `venv`, `.venv`, `.venv_uv`, `tests` apply to **all** steps; for steps 1-3b, pass the tool's own exclusion flag (`ruff`: `--exclude`, `vulture`: N/A (global AST), `radon`: `--exclude`).
+- The standard exclusions `venv`, `.venv`, `.venv_uv`, `tests` apply to **all** steps; for steps 1-3b, pass the tool's own exclusion flag (`ruff`: `--exclude`, `vulture`: `--exclude`, `radon`: `--exclude`).
 
 </execution_steps>
 
