@@ -4,14 +4,15 @@
     {
       "id": 1,
       "prompt": "I'm taking over a 3-year-old Flask project and I'd like a full health check before I start refactoring. The code lives in ./backend. Tell me where the technical debt is.",
-      "expected_output": "A file python_health_report.md at the root of ./backend containing the 5 sections, with a justified A-F grade, and at least 3 concrete actions in the action plan. The tools Ruff, Vulture, Radon and Pylint must all have been invoked.",
+      "expected_output": "A file python_health_report.md at the root of ./backend containing the YAML header and the 5 top-level sections (2.1/2.2 are subsections of section 2), with a justified A-F grade, and exactly 3 concrete actions in the action plan. The tools Ruff, Vulture, Radon and Pylint must all have been invoked.",
       "files": [],
       "expectations": [
         "The file python_health_report.md exists at the root of the audited project",
-        "All 5 sections (Executive Summary, Local Dead Code, Global Dead Code, Complexity, Duplication, Action Plan) are present",
-        "No source .py file has been modified (read-only)",
-        "The commands ruff, vulture, radon cc, radon mi and pylint have all been executed",
-        "An A-F grade appears in the Executive Summary",
+        "A YAML header with audit.grade and metrics (ruff, vulture, avg_mi, sloc) is present at the top of the report",
+        "All 5 top-level sections (Executive Summary, Dead Code, Complexity, Duplication, Action Plan) are present",
+        "No source .py file has been modified (read-only) and no cache directory (e.g. .ruff_cache) was created",
+        "The commands ruff, vulture, radon cc, radon mi, radon raw and pylint have all been executed",
+        "An A-F grade appears in the Executive Summary and in the YAML header",
         "The action plan contains exactly 3 numbered actions",
         "No ruff --fix or automatic fix has been applied",
         "The Vulture false-positive warning is present"
@@ -27,6 +28,48 @@
         "Section 4 Code Duplication is present even if empty (with explicit mention 'No duplication detected')",
         "Both subsections 2.1 Ruff and 2.2 Vulture are present",
         "The Vulture false-positive warning is present",
+        "No source file modified"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Je reprends un vieux projet Django. Tu peux me faire un bilan de santé complet avant que je commence la refonte ? Le code est dans ./backend. Dis-moi où est la dette technique.",
+      "expected_output": "Same behavior as eval 1 (French prompt): python_health_report.md at the root of ./backend with YAML header, 5 sections, justified A-F grade, exactly 3 actions, all 4 tools invoked.",
+      "files": [],
+      "expectations": [
+        "The file python_health_report.md exists at the root of the audited project",
+        "The audit tools were run against ./backend (not the repository root)",
+        "A YAML header with audit.grade is present",
+        "All 5 top-level sections are present",
+        "An A-F grade appears in the Executive Summary",
+        "The action plan contains exactly 3 numbered actions",
+        "No source file modified"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Run an extended health audit on this project: the usual dead code and complexity check, plus my dependencies for known vulnerabilities and my docstring coverage.",
+      "expected_output": "Standard report plus section 6 (Extended Findings) with 6.1 Dependencies (pip-audit result or explicit skip reason), 6.2 Docstring coverage (interrogate), 6.3 TODO/FIXME census, 6.4 Git churn. The grade is computed on core metrics only.",
+      "files": [],
+      "expectations": [
+        "The file python_health_report.md is created with the 5 core sections",
+        "Section 6 Extended Findings is present with the 4 subsections",
+        "pip-audit was invoked OR an explicit skip reason is stated (no requirements file / network error)",
+        "interrogate was invoked and reports a docstring coverage percentage",
+        "The grade is derived from core metrics only (section 6 does not affect it)",
+        "No source file modified"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Re-run the health audit — I cleaned up some things since the last report.",
+      "expected_output": "A previous python_health_report.md exists (v2 format with YAML header). The new report contains a 'Since last audit' line in the Executive Summary, metric deltas, and a history array carried forward and appended in the YAML header.",
+      "files": [],
+      "expectations": [
+        "The previous report was read before being overwritten",
+        "The Executive Summary contains a 'Since last audit (<date>)' line with the previous grade and the new grade",
+        "The YAML header contains a history array including at least the previous audit date+grade and the new one",
+        "The previous report's metrics are not lost (history carried forward)",
         "No source file modified"
       ]
     }
