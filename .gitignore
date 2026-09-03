@@ -6,6 +6,8 @@ __pycache__/
 .Python
 venv/
 .venv/
+# Note: evals/fixtures/debt-ridden-project/.venv/lib/decoy.py is tracked
+# (force-added) on purpose — it proves the audit steps exclude virtualenvs.
 .venv_uv/
 env/
 .env

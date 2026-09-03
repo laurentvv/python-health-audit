@@ -1,0 +1,129 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Weekly, Monday 06:00 UTC — guards the intentionally unpinned uvx tools
+    # against upstream breakage (new defaults, removed flags, new exit codes).
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate evals.json
+        run: python3 -c "import json; json.load(open('evals/evals.json', encoding='utf-8')); print('evals.json OK')"
+
+      - name: Validate SKILL.md frontmatter
+        run: |
+          python3 - <<'EOF'
+          import re
+          text = open('SKILL.md', encoding='utf-8').read()
+          m = re.match(r'^---\n(.*?)\n---\n', text, re.S)
+          assert m, 'SKILL.md must start with a frontmatter block delimited by ---'
+          fm = m.group(1)
+          for field in ('name:', 'description:'):
+              assert field in fm, f'missing frontmatter field: {field}'
+          assert 'F' in fm and 'A' in fm, 'description should mention the A-F grade'
+          print('SKILL.md frontmatter OK')
+          EOF
+
+      - name: Validate fixture debt is still planted
+        run: |
+          test -f evals/fixtures/debt-ridden-project/app.py
+          test -f evals/fixtures/debt-ridden-project/services/csv_export.py
+          test -f evals/fixtures/debt-ridden-project/.venv/lib/decoy.py
+          grep -q "planted F841" evals/fixtures/debt-ridden-project/app.py
+          echo 'fixture OK'
+
+  smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+        working-directory: evals/fixtures/debt-ridden-project
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+
+      - name: "Step 1 — Ruff (pinned rule set, read-only)"
+        run: |
+          set +e
+          uvx ruff check . --isolated --no-cache --select E4,E7,E9,F --exclude venv,.venv,.venv_uv,tests > _ruff.out 2>&1
+          set -e
+          grep -q "F401" _ruff.out || { echo "::error::expected F401 findings"; cat _ruff.out; exit 1; }
+          grep -q "F841" _ruff.out || { echo "::error::expected F841 finding"; cat _ruff.out; exit 1; }
+          ! grep -q "test_smoke" _ruff.out || { echo "::error::tests/ was not excluded"; exit 1; }
+          ! grep -qi "decoy" _ruff.out || { echo "::error::.venv was not excluded"; exit 1; }
+          test ! -d .ruff_cache || { echo "::error::.ruff_cache was written (read-only violated)"; exit 1; }
+
+      - name: "Step 2 — Vulture (min-confidence 60)"
+        run: |
+          set +e
+          uvx vulture . --min-confidence 60 --exclude venv,.venv,.venv_uv,tests > _vulture.out 2>&1
+          set -e
+          grep -q "unused class 'OldReportBuilder'" _vulture.out || { echo "::error::dead class not reported at 60"; cat _vulture.out; exit 1; }
+          grep -q "unused function 'old_helper'" _vulture.out || { echo "::error::dead function not reported at 60"; cat _vulture.out; exit 1; }
+          ! grep -q "test_smoke" _vulture.out || { echo "::error::tests/ was not excluded"; exit 1; }
+          ! grep -qi "decoy" _vulture.out || { echo "::error::.venv was not excluded"; exit 1; }
+
+      - name: "Step 3a — Radon cc hotspots"
+        run: |
+          uvx radon cc . -a -s -nc --exclude "venv/*,.venv/*,.venv_uv/*,tests/*" > _cc.out 2>&1
+          grep -q "dispatch - E" _cc.out || { echo "::error::expected rank-E hotspot (dispatch)"; cat _cc.out; exit 1; }
+          grep -q "login - D" _cc.out || { echo "::error::expected rank-D hotspot (login)"; cat _cc.out; exit 1; }
+          ! grep -qi "decoy" _cc.out || { echo "::error::.venv was not excluded"; exit 1; }
+
+      - name: "Step 3b — Radon mi numeric scores"
+        run: |
+          uvx radon mi . -s --exclude "venv/*,.venv/*,.venv_uv/*,tests/*" > _mi.out 2>&1
+          grep -qE "\([0-9]+\.[0-9]+\)" _mi.out || { echo "::error::no numeric MI scores (missing -s?)"; cat _mi.out; exit 1; }
+
+      - name: "Step 3c — Radon raw SLOC total"
+        run: |
+          uvx radon raw . -s --exclude "venv/*,.venv/*,.venv_uv/*,tests/*" > _raw.out 2>&1
+          grep -A3 "\*\* Total \*\*" _raw.out | grep -q "SLOC" || { echo "::error::no SLOC total"; cat _raw.out; exit 1; }
+
+      - name: "Step 4 — Pylint duplicate-code (recursive, portable)"
+        run: |
+          set +e
+          uvx pylint --recursive=y --disable=all --enable=duplicate-code --ignore=venv,.venv,.venv_uv,tests . > _pylint.out 2>&1
+          set -e
+          grep -q "R0801" _pylint.out || { echo "::error::expected R0801 duplicate-code"; cat _pylint.out; exit 1; }
+          ! grep -qi "decoy" _pylint.out || { echo "::error::.venv was not excluded"; exit 1; }
+          ! grep -q "test_smoke" _pylint.out || { echo "::error::tests/ was not excluded"; exit 1; }
+
+      - name: "Extended — interrogate docstring coverage"
+        run: |
+          set +e
+          uvx interrogate . --exclude '^(venv|\.venv|\.venv_uv|tests)[\\/]' > _interrogate.out 2>&1
+          set -e
+          grep -qE "[0-9]+%" _interrogate.out || { echo "::error::interrogate produced no percentage"; cat _interrogate.out; exit 1; }
+
+      - name: "Extended — TODO/FIXME census"
+        run: |
+          count=$(grep -rnE 'TODO|FIXME|XXX|HACK' --include='*.py' . | wc -l)
+          test "$count" -ge 2 || { echo "::error::expected at least 2 TODO/FIXME"; exit 1; }
+
+      - name: "Extended — pip-audit (non-blocking, needs network)"
+        run: |
+          uvx pip-audit -r requirements.txt || echo "::warning::pip-audit failed or found CVEs (non-blocking smoke check)"
+
+      - name: "Read-only — no cache or artifact written into the fixture"
+        run: |
+          test ! -d .ruff_cache || { echo "::error::.ruff_cache present"; exit 1; }
+          if command -v git >/dev/null && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+            git status --porcelain . | grep -vE "^\?\? _(ruff|vulture|cc|mi|raw|pylint|interrogate)\.out$" \
+              && { echo "::error::unexpected modifications in fixture"; exit 1; } || true
+          fi
+          rm -f _ruff.out _vulture.out _cc.out _mi.out _raw.out _pylint.out _interrogate.out
