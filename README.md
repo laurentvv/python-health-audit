@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/banner.jpg" alt="python-health-audit banner" width="100%" />
+</p>
+
 # python-health-audit
 
 [![Skill](https://img.shields.io/badge/skill-v1.1-5b2ddb?style=flat-square)](SKILL.md)
@@ -162,17 +166,10 @@ python-health-audit/
 ├── LICENSE
 ├── .gitignore
 ├── SKILL.md          # frontmatter + role / objective / steps / grading / format / constraints
+├── assets/
+│   └── banner.jpg    # GitHub header banner
 └── evals/
     └── evals.json    # 2 benchmark test cases
-```
-python-health-audit/
-├── README.md
-├── LICENSE
-├── .gitignore
-└── python-health-audit/
-    ├── SKILL.md          # frontmatter + role / objective / steps / grading / format / constraints
-    └── evals/
-        └── evals.json    # 2 benchmark test cases
 ```
 
 ## Compatibility
