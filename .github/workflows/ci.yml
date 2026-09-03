@@ -123,7 +123,10 @@ jobs:
         run: |
           test ! -d .ruff_cache || { echo "::error::.ruff_cache present"; exit 1; }
           if command -v git >/dev/null && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-            git status --porcelain . | grep -vE "^\?\? _(ruff|vulture|cc|mi|raw|pylint|interrogate)\.out$" \
-              && { echo "::error::unexpected modifications in fixture"; exit 1; } || true
+            # git status prints repo-root-relative paths — filter on the suffix
+            leftovers=$(git status --porcelain . | grep -vE "_(ruff|vulture|cc|mi|raw|pylint|interrogate)\.out$" || true)
+            if [ -n "$leftovers" ]; then
+              echo "::error::unexpected modifications in fixture"; echo "$leftovers"; exit 1
+            fi
           fi
           rm -f _ruff.out _vulture.out _cc.out _mi.out _raw.out _pylint.out _interrogate.out
