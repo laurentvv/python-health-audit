@@ -45,3 +45,4 @@ desktop.ini
 AGENTS.md
 tasks.md
 plan.md
+.agent/*.duckdb.wal
