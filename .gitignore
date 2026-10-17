@@ -46,3 +46,6 @@ AGENTS.md
 tasks.md
 plan.md
 .agent/*.duckdb.wal
+# Agent local state (ledger, installed skills) - kept on disk, never committed
+.agent/
+.agents/
